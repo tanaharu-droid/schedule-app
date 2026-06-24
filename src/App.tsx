@@ -6,9 +6,9 @@ function App() {
     const [time, setTime] = useState('')
     const [title, setTitle] = useState('')
     const [schedules, setSchedules] = useState([
-        { time: '10:00', title: '研究', done: false },
-        { time: '12:00', title: '昼食', done: false },
-        { time: '19:00', title: '楽器練習', done: false },
+        { id: 1, time: '10:00', title: '研究', done: false },
+        { id: 2, time: '12:00', title: '昼食', done: false },
+        { id: 3, time: '19:00', title: '楽器練習', done: false },
     ])
     const currentSchedule = schedules.find((schedule) => !schedule.done)//findで，条件に合う最初の1件を探す
 
@@ -16,20 +16,25 @@ function App() {
         if (title === '') return
 
         const newSchedule = {
+            id: Date.now(),//1970年1月1日 00:00:00 UTC から、今までに経過したミリ秒
             time: time,
             title: title,
             done: false,
         }
 
-        setSchedules([...schedules, newSchedule])
+        const sortedSchedules = [...schedules, newSchedule].sort((a, b) => {//newScheduleを含めた配列全体でソート（-→+）
+            return a.time.localeCompare(b.time)//aがbより前ならマイナス，aがbより後ならプラス
+        })
+
+        setSchedules(sortedSchedules)
 
         setTime('')
         setTitle('')
     }
 
-    const toggleDone = (index: number) => {//index番目の予定を切り替える
-        const newSchedules = schedules.map((schedule, i) => {//予定1件分のデータと番目を受け取り参照（map）
-            if (i === index) {
+    const toggleDone = (id: number) => {//あるidの予定を切り替える
+        const newSchedules = schedules.map((schedule) => {//予定1件分のデータを受け取り参照（map）
+            if (schedule.id === id) {
                 return {
                     ...schedule,//現在参照している予定をコピー
                     done: !schedule.done,//doneのみ反転させる
@@ -72,15 +77,15 @@ function App() {
             </section>
 
             <section className="playlist">
-                {schedules.map((schedule, index) => (
+                {schedules.map((schedule) => (
                     <div
                         className={`schedule-item ${schedule.done ? 'done' : ''}`}//doneがtrueのとき，classNameにdoneが加わる
-                        key={`${schedule.time}-${schedule.title}`}
+                        key={schedule.id}
                     >
                         <span className="time">{schedule.time}</span>
                         <span className="title">{schedule.title}</span>
 
-                        <button onClick={() => toggleDone(index)}>
+                        <button onClick={() => toggleDone(schedule.id)}>
                             {schedule.done ? '戻す' : '完了'}
                         </button>
                     </div>

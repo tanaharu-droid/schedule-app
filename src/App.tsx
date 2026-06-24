@@ -10,6 +10,7 @@ function App() {
         { time: '12:00', title: '昼食', done: false },
         { time: '19:00', title: '楽器練習', done: false },
     ])
+    const currentSchedule = schedules.find((schedule) => !schedule.done)//findで，条件に合う最初の1件を探す
 
     const addSchedule = () => {
         if (title === '') return
@@ -47,7 +48,11 @@ function App() {
 
             <section className="now-playing">
                 <p>Now Playing</p>
-                <h2>研究</h2>
+                {currentSchedule ? (
+                    <h2>{currentSchedule.title}</h2>
+                ) : (
+                    <h2>Call it a day!</h2>
+                )}
             </section>
 
             <section className="form">

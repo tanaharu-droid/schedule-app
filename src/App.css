@@ -68,3 +68,7 @@ button {
   cursor: pointer;
 }
 
+.schedule-item.done {
+  opacity: 0.5;
+  text-decoration: line-through;
+}

@@ -72,3 +72,19 @@ button {
   opacity: 0.5;
   text-decoration: line-through;
 }
+
+.priority-High {
+  border: 1px solid #b42424f1;
+}
+
+.priority-Medium {
+  border: 1px solid #b3971ff1;
+}
+
+.priority-Low {
+  border: 1px solid #2446b4f1;
+}
+
+.priority-None {
+  border: 1px solid #ddd;
+}

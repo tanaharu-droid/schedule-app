@@ -1,21 +1,24 @@
 import { useState } from 'react'
 import './App.css'
 
+type Priority = 'High' | 'Medium' | 'Low' | 'None'
 type Schedule = {//予定データの設計図
     id: number
     time: string
     title: string
     done: boolean
+    priority: Priority
 }
 
 function App() {
 
     const [time, setTime] = useState('')
     const [title, setTitle] = useState('')
+    const [priority, setPriority] = useState<Priority>('None')
     const [schedules, setSchedules] = useState<Schedule[]>([//Schedule型の配列が入る
-        { id: 1, time: '10:00', title: '研究', done: false },
-        { id: 2, time: '12:00', title: '昼食', done: false },
-        { id: 3, time: '19:00', title: '楽器練習', done: false },
+        { id: 1, time: '10:00', title: '研究', done: false, priority: 'High' },
+        { id: 2, time: '12:00', title: '昼食', done: false, priority: 'Medium' },
+        { id: 3, time: '19:00', title: '楽器練習', done: false, priority: 'Low' },
     ])
     const currentSchedule = schedules.find((schedule) => !schedule.done)//findで，条件に合う最初の1件を探す
 
@@ -27,6 +30,7 @@ function App() {
             time: time,
             title: title,
             done: false,
+            priority: priority
         }
 
         const sortedSchedules = [...schedules, newSchedule].sort((a, b) => {//newScheduleを含めた配列全体でソート（-→+）
@@ -37,6 +41,7 @@ function App() {
 
         setTime('')
         setTitle('')
+        setPriority('None')
     }
 
     const toggleDone = (id: number) => {//あるidの予定を切り替える
@@ -79,6 +84,16 @@ function App() {
                     onChange={(e) => setTitle(e.target.value)}
                 />
 
+                <select
+                    value={priority}
+                    onChange={(e) => setPriority(e.target.value as Priority)}//selectからとれる値をPriority型として扱う
+                >
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                    <option value="None">None</option>
+                </select>
+
                 <button onClick={addSchedule}>追加</button>
 
             </section>
@@ -86,11 +101,12 @@ function App() {
             <section className="playlist">
                 {schedules.map((schedule) => (
                     <div
-                        className={`schedule-item ${schedule.done ? 'done' : ''}`}//doneがtrueのとき，classNameにdoneが加わる
+                        className={`schedule-item ${schedule.done ? 'done' : ''} priority-${schedule.priority}`}//doneがtrueのとき，classNameにdoneが加わる,Priority
                         key={schedule.id}
                     >
                         <span className="time">{schedule.time}</span>
                         <span className="title">{schedule.title}</span>
+                        <span className="priority">{schedule.priority}</span>
 
                         <button onClick={() => toggleDone(schedule.id)}>
                             {schedule.done ? '戻す' : '完了'}

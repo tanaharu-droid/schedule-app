@@ -1,11 +1,18 @@
 import { useState } from 'react'
 import './App.css'
 
+type Schedule = {//予定データの設計図
+    id: number
+    time: string
+    title: string
+    done: boolean
+}
+
 function App() {
 
     const [time, setTime] = useState('')
     const [title, setTitle] = useState('')
-    const [schedules, setSchedules] = useState([
+    const [schedules, setSchedules] = useState<Schedule[]>([//Schedule型の配列が入る
         { id: 1, time: '10:00', title: '研究', done: false },
         { id: 2, time: '12:00', title: '昼食', done: false },
         { id: 3, time: '19:00', title: '楽器練習', done: false },
@@ -15,7 +22,7 @@ function App() {
     const addSchedule = () => {
         if (title === '') return
 
-        const newSchedule = {
+        const newSchedule: Schedule = {
             id: Date.now(),//1970年1月1日 00:00:00 UTC から、今までに経過したミリ秒
             time: time,
             title: title,

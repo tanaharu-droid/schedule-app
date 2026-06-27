@@ -88,3 +88,22 @@ button {
 .priority-None {
   border: 1px solid #ddd;
 }
+
+.killed-list {
+  margin-top: 32px;
+}
+
+.killed-list h2 {
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+
+.killed-item {
+  display: flex;
+  gap: 16px;
+  padding: 12px 16px;
+  border: 1px dashed #999;
+  border-radius: 12px;
+  opacity: 0.6;
+  text-decoration: line-through;
+}

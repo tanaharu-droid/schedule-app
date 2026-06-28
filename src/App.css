@@ -107,3 +107,8 @@ button {
   opacity: 0.6;
   text-decoration: line-through;
 }
+
+.date {
+  font-weight: bold;
+  width: 120px;
+}

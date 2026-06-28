@@ -4,6 +4,7 @@ import './App.css'
 type Priority = 'High' | 'Medium' | 'Low' | 'None'
 type Schedule = {//予定データの設計図
     id: number
+    date: string
     time: string
     title: string
     done: boolean
@@ -14,6 +15,7 @@ function App() {
 
     const [time, setTime] = useState('')
     const [title, setTitle] = useState('')
+    const [date, setDate] = useState('')
     const [priority, setPriority] = useState<Priority>('None')
     const [schedules, setSchedules] = useState<Schedule[]>(() => {//Schedule型の配列が入る
         const savedSchedules = localStorage.getItem('schedules')
@@ -22,11 +24,7 @@ function App() {
             return JSON.parse(savedSchedules)
         }
 
-        return [
-            { id: 1, time: '10:00', title: '研究', done: false, priority: 'High' },
-            { id: 2, time: '12:00', title: '昼食', done: false, priority: 'Medium' },
-            { id: 3, time: '19:00', title: '楽器練習', done: false, priority: 'Low' },
-        ]
+        return []
     })
 
     const [killedSchedules, setKilledSchedules] = useState<Schedule[]>(() => {
@@ -38,6 +36,8 @@ function App() {
 
         return []
     })
+
+
 
     const currentSchedule = schedules.find((schedule) => !schedule.done)//findで，条件に合う最初の1件を探す
 
@@ -53,14 +53,15 @@ function App() {
 
         const newSchedule: Schedule = {
             id: Date.now(),//1970年1月1日 00:00:00 UTC から、今までに経過したミリ秒
+            date: date,
             time: time,
             title: title,
             done: false,
             priority: priority
         }
 
-        const sortedSchedules = [...schedules, newSchedule].sort((a, b) => {//newScheduleを含めた配列全体でソート（-→+）
-            return a.time.localeCompare(b.time)//aがbより前ならマイナス，aがbより後ならプラス
+        const sortedSchedules = [...schedules, newSchedule].sort((a, b) => {
+            return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)
         })
 
         setSchedules(sortedSchedules)
@@ -104,7 +105,7 @@ function App() {
         const newKilledSchedules = killedSchedules.filter((schedule) => schedule.id !== id)
 
         const sortedSchedules = [...schedules, targetSchedule].sort((a, b) => {
-            return a.time.localeCompare(b.time)
+            return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)
         })
 
         setKilledSchedules(newKilledSchedules)
@@ -125,6 +126,11 @@ function App() {
             </section>
 
             <section className="form">
+                <input type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                />
+
                 <input type="time"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
@@ -156,6 +162,7 @@ function App() {
                         className={`schedule-item ${schedule.done ? 'done' : ''} priority-${schedule.priority}`}//doneがtrueのとき，classNameにdoneが加わる,Priority
                         key={schedule.id}
                     >
+                        <span className="date">{schedule.date}</span>
                         <span className="time">{schedule.time}</span>
                         <span className="title">{schedule.title}</span>
                         <span className="priority">{schedule.priority}</span>
@@ -179,6 +186,7 @@ function App() {
                 ) : (
                     killedSchedules.map((schedule) => (
                         <div className="killed-item" key={schedule.id}>
+                            <span className="date">{schedule.date}</span>
                             <span className="time">{schedule.time}</span>
                             <span className="title">{schedule.title}</span>
                             <span className="priority">{schedule.priority}</span>
@@ -194,3 +202,6 @@ function App() {
 }
 
 export default App
+
+//localStorage.removeItem('schedules')予定データ削除用
+//localStorage.removeItem('killedSchedules')キルした予定データ削除用

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 
 type Priority = 'High' | 'Medium' | 'Low' | 'None'
@@ -15,13 +15,38 @@ function App() {
     const [time, setTime] = useState('')
     const [title, setTitle] = useState('')
     const [priority, setPriority] = useState<Priority>('None')
-    const [schedules, setSchedules] = useState<Schedule[]>([//Schedule型の配列が入る
-        { id: 1, time: '10:00', title: '研究', done: false, priority: 'High' },
-        { id: 2, time: '12:00', title: '昼食', done: false, priority: 'Medium' },
-        { id: 3, time: '19:00', title: '楽器練習', done: false, priority: 'Low' },
-    ])
-    const [killedSchedules, setKilledSchedules] = useState<Schedule[]>([])//キルしたスケジュールリスト
+    const [schedules, setSchedules] = useState<Schedule[]>(() => {//Schedule型の配列が入る
+        const savedSchedules = localStorage.getItem('schedules')
+
+        if (savedSchedules) {
+            return JSON.parse(savedSchedules)
+        }
+
+        return [
+            { id: 1, time: '10:00', title: '研究', done: false, priority: 'High' },
+            { id: 2, time: '12:00', title: '昼食', done: false, priority: 'Medium' },
+            { id: 3, time: '19:00', title: '楽器練習', done: false, priority: 'Low' },
+        ]
+    })
+
+    const [killedSchedules, setKilledSchedules] = useState<Schedule[]>(() => {
+        const savedKilledSchedules = localStorage.getItem('killedSchedules')
+
+        if (savedKilledSchedules) {
+            return JSON.parse(savedKilledSchedules)
+        }
+
+        return []
+    })
+
     const currentSchedule = schedules.find((schedule) => !schedule.done)//findで，条件に合う最初の1件を探す
+
+    useEffect(() => {
+        localStorage.setItem('schedules', JSON.stringify(schedules))
+    }, [schedules])
+    useEffect(() => {
+        localStorage.setItem('killedSchedules', JSON.stringify(killedSchedules))
+    }, [killedSchedules])
 
     const addSchedule = () => {
         if (title === '') return

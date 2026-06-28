@@ -3,7 +3,8 @@ import './App.css'
 
 type Priority = 'High' | 'Medium' | 'Low' | 'None'
 type ViewMode = 'tasks' | 'week'
-type Schedule = {//予定データの設計図
+
+type Schedule = {
     id: number
     date: string
     time: string
@@ -31,6 +32,12 @@ const getWeekDates = () => {
     })
 }
 
+const sortSchedules = (schedules: Schedule[]) => {
+    return [...schedules].sort((a, b) => {
+        return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)
+    })
+}
+
 function App() {
     const todayDate = formatDate(new Date())
     const weekDates = getWeekDates()
@@ -40,7 +47,8 @@ function App() {
     const [date, setDate] = useState(todayDate)
     const [priority, setPriority] = useState<Priority>('None')
     const [viewMode, setViewMode] = useState<ViewMode>('tasks')
-    const [schedules, setSchedules] = useState<Schedule[]>(() => {//Schedule型の配列が入る
+
+    const [schedules, setSchedules] = useState<Schedule[]>(() => {
         const savedSchedules = localStorage.getItem('schedules')
 
         if (savedSchedules) {
@@ -50,88 +58,120 @@ function App() {
         return []
     })
 
-    const [killedSchedules, setKilledSchedules] = useState<Schedule[]>(() => {
-        const savedKilledSchedules = localStorage.getItem('killedSchedules')
+    const [clearedSchedules, setClearedSchedules] = useState<Schedule[]>(() => {
+        const savedClearedSchedules = localStorage.getItem('clearedSchedules')
 
-        if (savedKilledSchedules) {
-            return JSON.parse(savedKilledSchedules)
+        if (savedClearedSchedules) {
+            return JSON.parse(savedClearedSchedules)
         }
 
         return []
     })
 
-    const currentSchedule = schedules.find(
-        (schedule) => schedule.date === todayDate && !schedule.done)//findで，条件に合う最初の1件を探す
+    const todaySchedules = schedules.filter((schedule) => schedule.date === todayDate)
+    const currentSchedule = todaySchedules[0]
 
     useEffect(() => {
         localStorage.setItem('schedules', JSON.stringify(schedules))
     }, [schedules])
+
     useEffect(() => {
-        localStorage.setItem('killedSchedules', JSON.stringify(killedSchedules))
-    }, [killedSchedules])
+        localStorage.setItem('clearedSchedules', JSON.stringify(clearedSchedules))
+    }, [clearedSchedules])
 
     const addSchedule = () => {
         if (title === '') return
+        if (date === '') return
+        if (time === '') return
 
         const newSchedule: Schedule = {
-            id: Date.now(),//1970年1月1日 00:00:00 UTC から、今までに経過したミリ秒
-            date: date,
-            time: time,
-            title: title,
+            id: Date.now(),
+            date,
+            time,
+            title,
             done: false,
-            priority: priority
+            priority,
         }
 
-        const sortedSchedules = [...schedules, newSchedule].sort((a, b) => {
-            return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)
-        })
+        setSchedules(sortSchedules([...schedules, newSchedule]))
 
-        setSchedules(sortedSchedules)
-
+        setDate(todayDate)
         setTime('')
         setTitle('')
         setPriority('None')
     }
 
-    const toggleDone = (id: number) => {//あるidの予定を切り替える
-        const newSchedules = schedules.map((schedule) => {//予定1件分のデータを受け取り参照（map）
+    const updatePriority = (id: number, newPriority: Priority) => {
+        const newSchedules = schedules.map((schedule) => {
             if (schedule.id === id) {
                 return {
-                    ...schedule,//現在参照している予定をコピー
-                    done: !schedule.done,//doneのみ反転させる
+                    ...schedule,
+                    priority: newPriority,
                 }
             }
 
-            return schedule//クリックされた予定でないならそのまま返す
+            return schedule
         })
 
-        setSchedules(newSchedules)//更新されたnewSchedulesを代入する
+        setSchedules(newSchedules)
     }
 
-    const killSchedule = (id: number) => {
-        const targetSchedule = schedules.find((schedule) => schedule.id === id)//キルする予定1件を探す
+    const clearSchedule = (id: number) => {
+        const targetSchedule = schedules.find((schedule) => schedule.id === id)
 
         if (!targetSchedule) return
 
-        const newSchedules = schedules.filter((schedule) => schedule.id !== id)//配列から条件に合うものだけ残して新しい配列を作成
+        const newSchedules = schedules.filter((schedule) => schedule.id !== id)
 
         setSchedules(newSchedules)
-        setKilledSchedules([...killedSchedules, targetSchedule])
+        setClearedSchedules([...clearedSchedules, targetSchedule])
     }
 
     const restoreSchedule = (id: number) => {
-        const targetSchedule = killedSchedules.find((schedule) => schedule.id === id)
+        const targetSchedule = clearedSchedules.find((schedule) => schedule.id === id)
 
         if (!targetSchedule) return
 
-        const newKilledSchedules = killedSchedules.filter((schedule) => schedule.id !== id)
+        const newClearedSchedules = clearedSchedules.filter(
+            (schedule) => schedule.id !== id
+        )
 
-        const sortedSchedules = [...schedules, targetSchedule].sort((a, b) => {
-            return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)
-        })
+        setClearedSchedules(newClearedSchedules)
+        setSchedules(sortSchedules([...schedules, targetSchedule]))
+    }
 
-        setKilledSchedules(newKilledSchedules)
-        setSchedules(sortedSchedules)
+    const renderScheduleItem = (schedule: Schedule, showDate: boolean) => {
+        return (
+            <div
+                className={`schedule-item priority-${schedule.priority}`}
+                key={schedule.id}
+            >
+                <label className="task-check">
+                    <input
+                        type="checkbox"
+                        onChange={() => clearSchedule(schedule.id)}
+                    />
+                </label>
+
+                {showDate && <span className="date">{schedule.date}</span>}
+
+                <span className="time">{schedule.time}</span>
+                <span className="title">{schedule.title}</span>
+
+                <select
+                    className="priority-select"
+                    value={schedule.priority}
+                    onChange={(e) =>
+                        updatePriority(schedule.id, e.target.value as Priority)
+                    }
+                >
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                    <option value="None">None</option>
+                </select>
+            </div>
+        )
     }
 
     return (
@@ -148,33 +188,30 @@ function App() {
             </section>
 
             <section className="view-switch">
-                <button
-                    className="tasks"
-                    onClick={() => setViewMode('tasks')}>
+                <button onClick={() => setViewMode('tasks')}>
                     Tasks
                 </button>
 
-                <button
-                    className="week"
-                    onClick={() => setViewMode('week')}>
+                <button onClick={() => setViewMode('week')}>
                     Week
                 </button>
             </section>
 
             <section className="form">
-                <input type="date"
+                <input
+                    type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
                 />
 
-
-
-                <input type="time"
+                <input
+                    type="time"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
                 />
 
-                <input type="text"
+                <input
+                    type="text"
                     placeholder="予定を入力"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
@@ -182,7 +219,7 @@ function App() {
 
                 <select
                     value={priority}
-                    onChange={(e) => setPriority(e.target.value as Priority)}//selectからとれる値をPriority型として扱う
+                    onChange={(e) => setPriority(e.target.value as Priority)}
                 >
                     <option value="High">High</option>
                     <option value="Medium">Medium</option>
@@ -191,30 +228,17 @@ function App() {
                 </select>
 
                 <button onClick={addSchedule}>追加</button>
-
             </section>
 
             {viewMode === 'tasks' ? (
                 <section className="playlist">
-                    {schedules.map((schedule) => (
-                        <div
-                            className={`schedule-item ${schedule.done ? 'done' : ''} priority-${schedule.priority}`}//doneがtrueのとき，classNameにdoneが加わる,Priority
-                            key={schedule.id}
-                        >
-                            <span className="date">{schedule.date}</span>
-                            <span className="time">{schedule.time}</span>
-                            <span className="title">{schedule.title}</span>
-                            <span className="priority">{schedule.priority}</span>
-
-                            <button onClick={() => toggleDone(schedule.id)}>
-                                {schedule.done ? '戻す' : '完了'}
-                            </button>
-
-                            <button onClick={() => killSchedule(schedule.id)}>
-                                Kill
-                            </button>
-                        </div>
-                    ))}
+                    {todaySchedules.length === 0 ? (
+                        <p className="empty-day">今日の予定はありません</p>
+                    ) : (
+                        todaySchedules.map((schedule) =>
+                            renderScheduleItem(schedule, false)
+                        )
+                    )}
                 </section>
             ) : (
                 <section className="week-view">
@@ -231,24 +255,9 @@ function App() {
                                     <p className="empty-day">予定なし</p>
                                 ) : (
                                     <div className="playlist">
-                                        {schedulesForDate.map((schedule) => (
-                                            <div
-                                                className={`schedule-item ${schedule.done ? 'done' : ''} priority-${schedule.priority}`}
-                                                key={schedule.id}
-                                            >
-                                                <span className="time">{schedule.time}</span>
-                                                <span className="title">{schedule.title}</span>
-                                                <span className="priority">{schedule.priority}</span>
-
-                                                <button onClick={() => toggleDone(schedule.id)}>
-                                                    {schedule.done ? '戻す' : '完了'}
-                                                </button>
-
-                                                <button onClick={() => killSchedule(schedule.id)}>
-                                                    Kill
-                                                </button>
-                                            </div>
-                                        ))}
+                                        {schedulesForDate.map((schedule) =>
+                                            renderScheduleItem(schedule, false)
+                                        )}
                                     </div>
                                 )}
                             </section>
@@ -256,30 +265,35 @@ function App() {
                     })}
                 </section>
             )}
-            <section className="killed-list">
-                <h2>Killed Tasks</h2>
 
-                {killedSchedules.length === 0 ? (
-                    <p>キルしたタスクはありません</p>
+            <section className="killed-list">
+                <h2>Cleared Tasks</h2>
+
+                {clearedSchedules.length === 0 ? (
+                    <p>完了したタスクはありません</p>
                 ) : (
-                    killedSchedules.map((schedule) => (
+                    clearedSchedules.map((schedule) => (
                         <div className="killed-item" key={schedule.id}>
+                            <label className="task-check">
+                                <input
+                                    type="checkbox"
+                                    checked={true}
+                                    onChange={() => restoreSchedule(schedule.id)}
+                                />
+                            </label>
                             <span className="date">{schedule.date}</span>
                             <span className="time">{schedule.time}</span>
                             <span className="title">{schedule.title}</span>
                             <span className="priority">{schedule.priority}</span>
-                            <button onClick={() => restoreSchedule(schedule.id)}>
-                                Restore
-                            </button>
                         </div>
                     ))
                 )}
             </section>
-        </main >
+        </main>
     )
 }
 
 export default App
-
 //localStorage.removeItem('schedules')予定データ削除用
-//localStorage.removeItem('killedSchedules')キルした予定データ削除用
+//localStorage.removeItem('killedSchedules')キルした予定データ削除用（旧）
+//localStorage.removeItem('clearedSchedules')キルした予定データ削除用

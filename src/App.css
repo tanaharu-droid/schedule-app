@@ -112,3 +112,33 @@ button {
   font-weight: bold;
   width: 120px;
 }
+
+.week-view {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.day-section {
+  padding: 16px;
+  /*border: 1px solid #eee;*/
+  border-radius: 16px;
+}
+
+.day-section h2 {
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+
+.empty-day {
+  margin: 0;
+  opacity: 0.5;
+}
+
+.view-switch {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  padding: 16px;
+  margin-bottom: 16px;
+}

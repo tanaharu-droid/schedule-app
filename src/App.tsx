@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import './App.css'
 
 type Priority = 'High' | 'Medium' | 'Low' | 'None'
+type ViewMode = 'tasks' | 'week'
 type Schedule = {//予定データの設計図
     id: number
     date: string
@@ -11,12 +12,34 @@ type Schedule = {//予定データの設計図
     priority: Priority
 }
 
+const formatDate = (date: Date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+
+    return `${year}-${month}-${day}`
+}
+
+const getWeekDates = () => {
+    const today = new Date()
+
+    return Array.from({ length: 7 }, (_, index) => {
+        const date = new Date(today)
+        date.setDate(today.getDate() + index)
+
+        return formatDate(date)
+    })
+}
+
 function App() {
+    const todayDate = formatDate(new Date())
+    const weekDates = getWeekDates()
 
     const [time, setTime] = useState('')
     const [title, setTitle] = useState('')
-    const [date, setDate] = useState('')
+    const [date, setDate] = useState(todayDate)
     const [priority, setPriority] = useState<Priority>('None')
+    const [viewMode, setViewMode] = useState<ViewMode>('tasks')
     const [schedules, setSchedules] = useState<Schedule[]>(() => {//Schedule型の配列が入る
         const savedSchedules = localStorage.getItem('schedules')
 
@@ -37,9 +60,8 @@ function App() {
         return []
     })
 
-
-
-    const currentSchedule = schedules.find((schedule) => !schedule.done)//findで，条件に合う最初の1件を探す
+    const currentSchedule = schedules.find(
+        (schedule) => schedule.date === todayDate && !schedule.done)//findで，条件に合う最初の1件を探す
 
     useEffect(() => {
         localStorage.setItem('schedules', JSON.stringify(schedules))
@@ -125,11 +147,27 @@ function App() {
                 )}
             </section>
 
+            <section className="view-switch">
+                <button
+                    className="tasks"
+                    onClick={() => setViewMode('tasks')}>
+                    Tasks
+                </button>
+
+                <button
+                    className="week"
+                    onClick={() => setViewMode('week')}>
+                    Week
+                </button>
+            </section>
+
             <section className="form">
                 <input type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
                 />
+
+
 
                 <input type="time"
                     value={time}
@@ -156,28 +194,68 @@ function App() {
 
             </section>
 
-            <section className="playlist">
-                {schedules.map((schedule) => (
-                    <div
-                        className={`schedule-item ${schedule.done ? 'done' : ''} priority-${schedule.priority}`}//doneがtrueのとき，classNameにdoneが加わる,Priority
-                        key={schedule.id}
-                    >
-                        <span className="date">{schedule.date}</span>
-                        <span className="time">{schedule.time}</span>
-                        <span className="title">{schedule.title}</span>
-                        <span className="priority">{schedule.priority}</span>
+            {viewMode === 'tasks' ? (
+                <section className="playlist">
+                    {schedules.map((schedule) => (
+                        <div
+                            className={`schedule-item ${schedule.done ? 'done' : ''} priority-${schedule.priority}`}//doneがtrueのとき，classNameにdoneが加わる,Priority
+                            key={schedule.id}
+                        >
+                            <span className="date">{schedule.date}</span>
+                            <span className="time">{schedule.time}</span>
+                            <span className="title">{schedule.title}</span>
+                            <span className="priority">{schedule.priority}</span>
 
-                        <button onClick={() => toggleDone(schedule.id)}>
-                            {schedule.done ? '戻す' : '完了'}
-                        </button>
+                            <button onClick={() => toggleDone(schedule.id)}>
+                                {schedule.done ? '戻す' : '完了'}
+                            </button>
 
-                        <button onClick={() => killSchedule(schedule.id)}>
-                            Kill
-                        </button>
-                    </div>
-                ))}
-            </section>
+                            <button onClick={() => killSchedule(schedule.id)}>
+                                Kill
+                            </button>
+                        </div>
+                    ))}
+                </section>
+            ) : (
+                <section className="week-view">
+                    {weekDates.map((weekDate) => {
+                        const schedulesForDate = schedules.filter(
+                            (schedule) => schedule.date === weekDate
+                        )
 
+                        return (
+                            <section className="day-section" key={weekDate}>
+                                <h2>{weekDate}</h2>
+
+                                {schedulesForDate.length === 0 ? (
+                                    <p className="empty-day">予定なし</p>
+                                ) : (
+                                    <div className="playlist">
+                                        {schedulesForDate.map((schedule) => (
+                                            <div
+                                                className={`schedule-item ${schedule.done ? 'done' : ''} priority-${schedule.priority}`}
+                                                key={schedule.id}
+                                            >
+                                                <span className="time">{schedule.time}</span>
+                                                <span className="title">{schedule.title}</span>
+                                                <span className="priority">{schedule.priority}</span>
+
+                                                <button onClick={() => toggleDone(schedule.id)}>
+                                                    {schedule.done ? '戻す' : '完了'}
+                                                </button>
+
+                                                <button onClick={() => killSchedule(schedule.id)}>
+                                                    Kill
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </section>
+                        )
+                    })}
+                </section>
+            )}
             <section className="killed-list">
                 <h2>Killed Tasks</h2>
 

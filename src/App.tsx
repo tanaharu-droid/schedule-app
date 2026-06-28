@@ -326,8 +326,8 @@ function App() {
             {viewMode === 'tasks' && (
                 <>
                     <section className="playlist">
-                        {todaySchedules.length === 0 ? (
-                            <p className="empty-day">今日の予定はありません</p>
+                        {schedules.length === 0 ? (
+                            <p className="empty-day">予定はありません</p>
                         ) : (
                             schedules.map((schedule) =>
                                 renderScheduleItem(schedule, true)

@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react'
 import './App.css'
 
 type Priority = 'High' | 'Medium' | 'Low' | 'None'
-type ViewMode = 'tasks' | 'week' | 'calendar'
+type ViewMode = 'tasks' | 'today' | 'week' | 'calendar'
 
 type Schedule = {
     id: number
     date: string
     time: string
+    endtime: string
     title: string
     done: boolean
     priority: Priority
@@ -53,11 +54,18 @@ const sortSchedules = (schedules: Schedule[]) => {
     })
 }
 
+const timeToMinutes = (time: string) => {
+    const [hour, minute] = time.split(':').map(Number)
+
+    return hour * 60 + minute
+}
+
 function App() {
     const todayDate = formatDate(new Date())
     const weekDates = getWeekDates()
 
     const [time, setTime] = useState('')
+    const [endtime, setEndtime] = useState('')
     const [title, setTitle] = useState('')
     const [date, setDate] = useState(todayDate)
     const [priority, setPriority] = useState<Priority>('None')
@@ -98,11 +106,18 @@ function App() {
         if (title === '') return
         if (date === '') return
         if (time === '') return
+        if (endtime === '') return
+
+        const startMinutes = timeToMinutes(time)
+        const endMinutes = timeToMinutes(endtime)
+
+        if (endMinutes <= startMinutes) return
 
         const newSchedule: Schedule = {
             id: Date.now(),
             date,
             time,
+            endtime,
             title,
             done: false,
             priority,
@@ -112,6 +127,7 @@ function App() {
 
         setDate(todayDate)
         setTime('')
+        setEndtime('')
         setTitle('')
         setPriority('None')
     }
@@ -170,7 +186,7 @@ function App() {
 
                 {showDate && <span className="date">{schedule.date}</span>}
 
-                <span className="time">{schedule.time}</span>
+                <span className="time">{schedule.time} - {schedule.endtime}</span>
                 <span className="title">{schedule.title}</span>
 
                 <select
@@ -207,6 +223,10 @@ function App() {
                     Tasks
                 </button>
 
+                <button onClick={() => setViewMode('today')}>
+                    Today
+                </button>
+
                 <button onClick={() => setViewMode('week')}>
                     Week
                 </button>
@@ -227,6 +247,12 @@ function App() {
                     type="time"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
+                />
+
+                <input
+                    type="time"
+                    value={endtime}
+                    onChange={(e) => setEndtime(e.target.value)}
                 />
 
                 <input
@@ -277,7 +303,7 @@ function App() {
                                         />
                                     </label>
                                     <span className="date">{schedule.date}</span>
-                                    <span className="time">{schedule.time}</span>
+                                    <span className="time">{schedule.time} - {schedule.endtime}</span>
                                     <span className="title">{schedule.title}</span>
                                     <span className="priority">{schedule.priority}</span>
                                 </div>
@@ -285,6 +311,49 @@ function App() {
                         )}
                     </section>
                 </>
+            )}
+
+            {viewMode === 'today' && (
+                <section className="today-timeline">
+                    {Array.from({ length: 24 }, (_, hour) => (
+                        <div className="timeline-hour" key={hour}>
+                            <div className="timeline-time">
+                                {String(hour).padStart(2, '0')}:00
+                            </div>
+
+                            <div className="timeline-line" />
+                        </div>
+                    ))}
+
+                    {todaySchedules.map((schedule) => {
+                        const startMinutes = timeToMinutes(schedule.time)
+                        const endMinutes = timeToMinutes(schedule.endtime)
+
+                        const hourHeight = 40
+
+                        const top = (startMinutes / 60) * hourHeight
+                        const height = ((endMinutes - startMinutes) / 60) * hourHeight
+
+                        return (
+                            <div
+                                className={`timeline-task priority-${schedule.priority}`}
+                                key={schedule.id}
+                                style={{
+                                    top: `${top}px`,
+                                    height: `${height}px`,
+                                }}
+                            >
+                                <span className="timeline-task-time">
+                                    {schedule.time} - {schedule.endtime}
+                                </span>
+
+                                <span className="timeline-task-title">
+                                    {schedule.title}
+                                </span>
+                            </div>
+                        )
+                    })}
+                </section>
             )}
 
             {viewMode === 'week' && (

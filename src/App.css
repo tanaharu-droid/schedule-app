@@ -44,10 +44,9 @@ h1 {
 }
 
 .time {
-  width: 52px;
+  font-weight: bold;
+  width: 104px;
   font-size: 12px;
-  font-weight: 600;
-  opacity: 0.8;
 }
 
 .title {
@@ -223,4 +222,62 @@ button {
 .calendar-empty {
   font-size: 12px;
   opacity: 0.4;
+}
+
+.today-timeline {
+  position: relative;
+  height: 960px;
+  margin-top: 16px;
+  border: 1px solid #333;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #181818;
+}
+
+.timeline-hour {
+  display: flex;
+  height: 40px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.timeline-time {
+  width: 56px;
+  padding-top: 4px;
+  padding-left: 8px;
+  font-size: 11px;
+  opacity: 0.55;
+}
+
+.timeline-line {
+  flex: 1;
+}
+
+.timeline-task {
+  position: absolute;
+  left: 64px;
+  right: 12px;
+  min-height: 24px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #242424;
+  font-size: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.timeline-task-time {
+  font-size: 11px;
+  font-weight: bold;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.timeline-task-title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

@@ -182,3 +182,45 @@ button {
 .kill-check {
   opacity: 0.75;
 }
+
+.calendar-view {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.calendar-day {
+  min-height: 160px;
+  padding: 12px;
+  border: 1px solid #333;
+  border-radius: 12px;
+  background: #1d1d1d;
+}
+
+.calendar-day h2 {
+  font-size: 12px;
+  margin: 0 0 10px;
+  opacity: 0.8;
+}
+
+.calendar-task {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  margin-bottom: 6px;
+  border-radius: 8px;
+  background: #2a2a2a;
+  font-size: 12px;
+}
+
+.calendar-task span:first-child {
+  font-weight: bold;
+  opacity: 0.7;
+}
+
+.calendar-empty {
+  font-size: 12px;
+  opacity: 0.4;
+}

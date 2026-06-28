@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import './App.css'
 
 type Priority = 'High' | 'Medium' | 'Low' | 'None'
-type ViewMode = 'tasks' | 'week'
+type ViewMode = 'tasks' | 'week' | 'calendar'
 
 type Schedule = {
     id: number
@@ -32,9 +32,24 @@ const getWeekDates = () => {
     })
 }
 
+const priorityOrder: Record<Priority, number> = {
+    High: 0,
+    Medium: 1,
+    Low: 2,
+    None: 3,
+}
+
 const sortSchedules = (schedules: Schedule[]) => {
     return [...schedules].sort((a, b) => {
-        return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)
+        const dateTimeCompare = `${a.date} ${a.time}`.localeCompare(
+            `${b.date} ${b.time}`
+        )
+
+        if (dateTimeCompare !== 0) {
+            return dateTimeCompare
+        }
+
+        return priorityOrder[a.priority] - priorityOrder[b.priority]
     })
 }
 
@@ -113,7 +128,7 @@ function App() {
             return schedule
         })
 
-        setSchedules(newSchedules)
+        setSchedules(sortSchedules(newSchedules))
     }
 
     const clearSchedule = (id: number) => {
@@ -195,6 +210,10 @@ function App() {
                 <button onClick={() => setViewMode('week')}>
                     Week
                 </button>
+
+                <button onClick={() => setViewMode('calendar')}>
+                    Calendar
+                </button>
             </section>
 
             <section className="form">
@@ -230,17 +249,45 @@ function App() {
                 <button onClick={addSchedule}>追加</button>
             </section>
 
-            {viewMode === 'tasks' ? (
-                <section className="playlist">
-                    {todaySchedules.length === 0 ? (
-                        <p className="empty-day">今日の予定はありません</p>
-                    ) : (
-                        todaySchedules.map((schedule) =>
-                            renderScheduleItem(schedule, false)
-                        )
-                    )}
-                </section>
-            ) : (
+            {viewMode === 'tasks' && (
+                <>
+                    <section className="playlist">
+                        {todaySchedules.length === 0 ? (
+                            <p className="empty-day">今日の予定はありません</p>
+                        ) : (
+                            todaySchedules.map((schedule) =>
+                                renderScheduleItem(schedule, false)
+                            )
+                        )}
+                    </section>
+
+                    <section className="killed-list">
+                        <h2>Cleared Tasks</h2>
+
+                        {clearedSchedules.length === 0 ? (
+                            <p>完了したタスクはありません</p>
+                        ) : (
+                            clearedSchedules.map((schedule) => (
+                                <div className="killed-item" key={schedule.id}>
+                                    <label className="task-check">
+                                        <input
+                                            type="checkbox"
+                                            checked={true}
+                                            onChange={() => restoreSchedule(schedule.id)}
+                                        />
+                                    </label>
+                                    <span className="date">{schedule.date}</span>
+                                    <span className="time">{schedule.time}</span>
+                                    <span className="title">{schedule.title}</span>
+                                    <span className="priority">{schedule.priority}</span>
+                                </div>
+                            ))
+                        )}
+                    </section>
+                </>
+            )}
+
+            {viewMode === 'week' && (
                 <section className="week-view">
                     {weekDates.map((weekDate) => {
                         const schedulesForDate = schedules.filter(
@@ -266,29 +313,33 @@ function App() {
                 </section>
             )}
 
-            <section className="killed-list">
-                <h2>Cleared Tasks</h2>
+            {viewMode === 'calendar' && (
+                <section className="calendar-view">
+                    {weekDates.map((weekDate) => {
+                        const schedulesForDate = schedules.filter(
+                            (schedule) => schedule.date === weekDate
+                        )
 
-                {clearedSchedules.length === 0 ? (
-                    <p>完了したタスクはありません</p>
-                ) : (
-                    clearedSchedules.map((schedule) => (
-                        <div className="killed-item" key={schedule.id}>
-                            <label className="task-check">
-                                <input
-                                    type="checkbox"
-                                    checked={true}
-                                    onChange={() => restoreSchedule(schedule.id)}
-                                />
-                            </label>
-                            <span className="date">{schedule.date}</span>
-                            <span className="time">{schedule.time}</span>
-                            <span className="title">{schedule.title}</span>
-                            <span className="priority">{schedule.priority}</span>
-                        </div>
-                    ))
-                )}
-            </section>
+                        return (
+                            <div className="calendar-day" key={weekDate}>
+                                <h2>{weekDate}</h2>
+
+                                {schedulesForDate.length === 0 ? (
+                                    <p className="calendar-empty">予定なし</p>
+                                ) : (
+                                    schedulesForDate.map((schedule) => (
+                                        <div className="calendar-task" key={schedule.id}>
+                                            <span>{schedule.time}</span>
+                                            <span>{schedule.title}</span>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        )
+                    })}
+                </section>
+            )}
+
         </main>
     )
 }

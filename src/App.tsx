@@ -42,12 +42,44 @@ const priorityOrder: Record<Priority, number> = {
 
 const sortSchedules = (schedules: Schedule[]) => {
     return [...schedules].sort((a, b) => {
-        const dateTimeCompare = `${a.date} ${a.time}`.localeCompare(
-            `${b.date} ${b.time}`
-        )
+        const aHasDate = a.date !== ''
+        const bHasDate = b.date !== ''
 
-        if (dateTimeCompare !== 0) {
-            return dateTimeCompare
+        const aHasDateTime = a.date !== '' && a.time !== ''
+        const bHasDateTime = b.date !== '' && b.time !== ''
+
+        if (aHasDate && !bHasDate) {
+            return -1
+        }
+
+        if (!aHasDate && bHasDate) {
+            return 1
+        }
+
+        if (aHasDate && bHasDate) {
+            const dateCompare = a.date.localeCompare(b.date)
+
+            if (dateCompare !== 0) {
+                return dateCompare
+            }
+
+            if (aHasDateTime && !bHasDateTime) {
+                return -1
+            }
+
+            if (!aHasDateTime && bHasDateTime) {
+                return 1
+            }
+
+            if (aHasDateTime && bHasDateTime) {
+                const timeCompare = a.time.localeCompare(b.time)
+
+                if (timeCompare !== 0) {
+                    return timeCompare
+                }
+            }
+
+            return priorityOrder[a.priority] - priorityOrder[b.priority]
         }
 
         return priorityOrder[a.priority] - priorityOrder[b.priority]
@@ -92,6 +124,9 @@ function App() {
     })
 
     const todaySchedules = schedules.filter((schedule) => schedule.date === todayDate)
+    const todayTimedSchedules = todaySchedules.filter(
+        (schedule) => schedule.time !== '' && schedule.endtime !== ''
+    )
     const currentSchedule = todaySchedules[0]
 
     useEffect(() => {
@@ -104,20 +139,25 @@ function App() {
 
     const addSchedule = () => {
         if (title === '') return
-        if (date === '') return
-        if (time === '') return
-        if (endtime === '') return
 
-        const startMinutes = timeToMinutes(time)
-        const endMinutes = timeToMinutes(endtime)
+        const hasDate = date !== ''
+        const hasTime = time !== ''
+        const hasEndtime = endtime !== ''
 
-        if (endMinutes <= startMinutes) return
+        if (hasTime !== hasEndtime) return
+
+        if (hasTime && hasEndtime) {
+            const startMinutes = timeToMinutes(time)
+            const endMinutes = timeToMinutes(endtime)
+
+            if (endMinutes <= startMinutes) return
+        }
 
         const newSchedule: Schedule = {
             id: Date.now(),
-            date,
-            time,
-            endtime,
+            date: hasDate ? date : '',
+            time: hasTime ? time : '',
+            endtime: hasEndtime ? endtime : '',
             title,
             done: false,
             priority,
@@ -184,11 +224,19 @@ function App() {
                     />
                 </label>
 
-                {showDate && <span className="date">{schedule.date}</span>}
+                {showDate && (
+                    <span className="date">
+                        {schedule.date || ''}
+                    </span>
+                )}
 
-                <span className="time">{schedule.time} - {schedule.endtime}</span>
+                <span className="time">
+                    {schedule.time && schedule.endtime
+                        ? `${schedule.time} - ${schedule.endtime}`
+                        : ''}
+                </span>
+
                 <span className="title">{schedule.title}</span>
-
                 <select
                     className="priority-select"
                     value={schedule.priority}
@@ -281,8 +329,8 @@ function App() {
                         {todaySchedules.length === 0 ? (
                             <p className="empty-day">今日の予定はありません</p>
                         ) : (
-                            todaySchedules.map((schedule) =>
-                                renderScheduleItem(schedule, false)
+                            schedules.map((schedule) =>
+                                renderScheduleItem(schedule, true)
                             )
                         )}
                     </section>
@@ -325,7 +373,7 @@ function App() {
                         </div>
                     ))}
 
-                    {todaySchedules.map((schedule) => {
+                    {todayTimedSchedules.map((schedule) => {
                         const startMinutes = timeToMinutes(schedule.time)
                         const endMinutes = timeToMinutes(schedule.endtime)
 
